@@ -12,8 +12,10 @@ baseURL = 'https://www.indeed.co.uk'
 def main():
     # loop using start param to change page
     # loop over 35 pages of job postings
+    k = 20
+    # k is number of pages to iterate over
     allJobPosts = []
-    for num in np.arange(0,10, 10):
+    for num in np.arange(0, k, 10):
         page = requests.get(URL, params=dict(
             start=num
         ))
@@ -24,7 +26,7 @@ def main():
     merged = list(itertools.chain.from_iterable(allJobPosts))
 
     # create pd to save
-    cols = ['JobTitle', 'CompName', 'JobLoc', 'JobEmplType', 'JobDesc', 'JobURL']
+    cols = ['JobTitle', 'CompName', 'JobLoc', 'JobPay', 'JobEmplType', 'JobURL', 'JobDesc']
     jobDf = pd.DataFrame(columns=cols)
 
     for item in merged:
@@ -45,9 +47,16 @@ def main():
         # location
         jobLoc = soup.find_all('div', attrs={"class": "jobsearch-JobMetadataHeader-itemWithIcon"})[0].text
 
-        # employment type
+        # employment type and pay
+        jobPay = 'not listed'
         try:
             jobEmplType = soup.find_all('div', attrs={"class": "jobsearch-JobMetadataHeader-itemWithIcon"})[1].text
+            if '£' in jobEmplType or '€' in jobEmplType:
+                jobPay = jobEmplType
+                try:
+                    jobEmplType = soup.find_all('div', attrs={"class": "jobsearch-JobMetadataHeader-itemWithIcon"})[2].text
+                except:
+                    jobEmplType = "not listed"
         except:
             jobEmplType = "not listed"
 
@@ -58,15 +67,9 @@ def main():
         jobUrl = baseURL + item
 
         # jobDf[jobDfLen] = jobPost
-        jobDf = jobDf.append({'JobTitle': jobTitle, 'CompName': compName, 'JobLoc': jobLoc, 'JobEmplType': jobEmplType, 'JobDesc': jobDesc, 'JobURL': jobUrl}, ignore_index=True)
+        jobDf = jobDf.append({'JobTitle': jobTitle, 'CompName': compName, 'JobLoc': jobLoc, 'JobPay': jobPay, 'JobEmplType': jobEmplType, 'JobDesc': jobDesc, 'JobURL': jobUrl}, ignore_index=True)
 
-    jobDf.to_csv('test.csv')
-
-
-
-
-
-
+    jobDf.to_csv('jobs.csv')
 
 
 
